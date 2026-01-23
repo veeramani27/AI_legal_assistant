@@ -1,0 +1,31 @@
+[project]
+name = "legal-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "assemblyai>=0.48.4",
+    "beautifulsoup4>=4.14.3",
+    "black>=25.12.0",
+    "chroma>=0.2.0",
+    "deepgram-sdk>=5.3.1",
+    "dotenv>=0.9.9",
+    "fastapi[standard]>=0.128.0",
+    "gtts>=2.5.4",
+    "ipykernel>=7.1.0",
+    "isort>=7.0.0",
+    "langchain-chroma>=1.1.0",
+    "langchain-classic>=1.0.1",
+    "langchain-community>=0.4.1",
+    "langchain-experimental>=0.4.1",
+    "langchain-groq>=1.1.1",
+    "langchain-huggingface>=1.2.0",
+    "langchain[openai]>=1.2.3",
+    "langfuse>=3.11.2",
+    "langgraph>=1.0.5",
+    "langgraph-checkpoint-sqlite>=3.0.1",
+    "pymupdf>=1.26.7",
+    "pypdf2>=3.0.1",
+    "sentence-transformers>=5.2.0",
+]

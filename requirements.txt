@@ -18,4 +18,4 @@ langgraph-checkpoint-sqlite
 isort
 black
 gTTS
-langchain-groq
+groq

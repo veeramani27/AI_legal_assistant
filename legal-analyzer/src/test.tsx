@@ -3,7 +3,6 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
-import { v4 as uuidv4 } from 'uuid'; // npm install uuid @types/uuid
 
 function App01() {
     const [file, setFile] = useState<File | null>(null);
@@ -13,7 +12,7 @@ function App01() {
 
     // Voice & Memory State
     const [isRecording, setIsRecording] = useState(false);
-    const [threadId] = useState(() => uuidv4()); // Persistent ID for the session
+    const [threadId, setThreadId] = useState<string | null>(null);
     const mediaRecorder = useRef<MediaRecorder | null>(null);
     const audioChunks = useRef<Blob[]>([]);
 
@@ -28,11 +27,13 @@ function App01() {
         const formData = new FormData();
         if (file) formData.append("file", file);
         formData.append("user_query", query);
-        formData.append("thread_id", threadId); // Pass thread_id for memory
+        if (threadId) formData.append("thread_id", threadId); // Pass thread_id for memory when available
 
         try {
             const res = await axios.post("http://localhost:8000/api/text", formData);
             setResult(res.data);
+            // capture backend generated thread id
+            if (res.data?.thread_id) setThreadId(res.data.thread_id);
             toast.success("Analysis complete!");
         } catch (err: any) {
             toast.error("Text analysis failed");
@@ -69,7 +70,7 @@ function App01() {
 
         const formData = new FormData();
         formData.append("audio_file", audioBlob);
-        formData.append("thread_id", threadId);
+        if (threadId) formData.append("thread_id", threadId);
         if (file) formData.append("file", file);
 
         try {
@@ -77,6 +78,10 @@ function App01() {
             const res = await axios.post("http://localhost:8000/api/voice", formData, {
                 responseType: 'blob',
             });
+
+            // capture thread id from response headers if backend included it
+            const headerThread = (res.headers && (res.headers['x-thread-id'] || res.headers['X-Thread-ID'])) || null;
+            if (headerThread) setThreadId(headerThread as string);
 
             // 1. Play the audio response
             const audioUrl = URL.createObjectURL(res.data);

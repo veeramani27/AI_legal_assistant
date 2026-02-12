@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
@@ -17,8 +17,8 @@ function LegalAIChat() {
     const { id: urlId } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // 1. CONSTANT THREAD ID: Generated ONCE per page load
-    const sessionThreadId = useMemo(() => uuidv4(), []);
+    // Session/thread id provided by backend; initially empty until first response
+    const [sessionThreadId, setSessionThreadId] = useState<string | null>(null);
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [file, setFile] = useState<File | null>(null);
@@ -31,10 +31,10 @@ function LegalAIChat() {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 2. Sync URL with the session thread ID on load
+    // If URL contains an id param, prefer that as the session id
     useEffect(() => {
-        navigate(`/${sessionThreadId}`, { replace: true });
-    }, [sessionThreadId, navigate]);
+        if (urlId) setSessionThreadId(urlId);
+    }, [urlId]);
 
     // Auto-scroll logic
     useEffect(() => {
@@ -66,15 +66,21 @@ function LegalAIChat() {
         if (file) formData.append("file", file);
         formData.append("user_query", activeQuery);
 
-        // Using the constant sessionThreadId
-        formData.append("thread_id", sessionThreadId);
+        // Only include thread_id if we already have one from backend/URL
+        if (sessionThreadId) formData.append("thread_id", sessionThreadId);
 
         try {
             const res = await axios.post("http://localhost:8000/api/text", formData);
             setMessages((prev) => [
                 ...prev,
-                { id: uuidv4(), role: 'assistant', content: res.data.result, timestamp: new Date() },
+                { id: Math.random().toString(36).slice(2), role: 'assistant', content: res.data.result, timestamp: new Date() },
             ]);
+
+            // Capture backend-generated thread id and update URL if needed
+            if (res.data?.thread_id) {
+                setSessionThreadId(res.data.thread_id);
+                navigate(`/${res.data.thread_id}`, { replace: true });
+            }
         } catch {
             toast.error("Failed to get response");
         } finally {
@@ -103,12 +109,11 @@ function LegalAIChat() {
         formData.append("audio_file", audioBlob);
         if (file) formData.append("file", file);
 
-        // Using the constant sessionThreadId
-        formData.append("thread_id", sessionThreadId);
+        if (sessionThreadId) formData.append("thread_id", sessionThreadId);
 
         try {
             const res = await axios.post("http://localhost:8000/api/voice", formData);
-            const { audio_base64, ai_text } = res.data;
+            const { audio_base64, ai_text, thread_id } = res.data;
 
             // Handle Audio Playback
             const binary = atob(audio_base64);
@@ -121,9 +126,15 @@ function LegalAIChat() {
 
             setMessages((prev) => [
                 ...prev,
-                { id: uuidv4(), role: 'user', content: "🎤 Voice input", timestamp: new Date() },
-                { id: uuidv4(), role: 'assistant', content: ai_text, timestamp: new Date() },
+                { id: Math.random().toString(36).slice(2), role: 'user', content: "🎤 Voice input", timestamp: new Date() },
+                { id: Math.random().toString(36).slice(2), role: 'assistant', content: ai_text, timestamp: new Date() },
             ]);
+
+            // Update session id from backend if provided
+            if (thread_id && !sessionThreadId) {
+                setSessionThreadId(thread_id);
+                navigate(`/${thread_id}`, { replace: true });
+            }
         } catch {
             toast.error("Voice processing failed");
         } finally {
@@ -147,7 +158,7 @@ function LegalAIChat() {
                         <h1 style={darkThemeStyles.logoText}>LegalAI</h1>
                     </div>
                     <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                        SESSION ID: {sessionThreadId.slice(0, 8).toUpperCase()}
+                        SESSION ID: {sessionThreadId?.slice(0, 8).toUpperCase()}
                     </div>
                 </div>
 
@@ -288,12 +299,12 @@ const darkThemeStyles: Record<string, React.CSSProperties> = {
         display: 'flex',
         flexDirection: 'column',
         background: '#0f172a',
-        width: '100%', 
-        minWidth: 0,   
+        width: '100%',
+        minWidth: 0,
     },
     messagesContainer: {
         flex: 1,
-        width: '100%', 
+        width: '100%',
         padding: '2rem 3rem',
         overflowY: 'auto',
         display: 'flex',
@@ -303,7 +314,7 @@ const darkThemeStyles: Record<string, React.CSSProperties> = {
     },
     emptyState: {
         flex: 1,
-        width: '100%', 
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

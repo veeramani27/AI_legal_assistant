@@ -114,11 +114,14 @@ async def analyze_text(
             user_query, current_thread, str(file_path) if file_path else None
         )
 
-        return {
-            "status": "success",
-            "result": response_text,
-            "thread_id": current_thread,
-        }
+        return JSONResponse(
+            {
+                "status": "success",
+                "result": response_text,
+                "thread_id": current_thread,
+            },
+            headers={"X-Thread-ID": current_thread},
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -182,7 +185,8 @@ async def analyze_voice(
                 "thread_id": current_thread,
                 "ai_text": ai_response_text,
                 "audio_base64": audio_b64,
-            }
+            },
+            headers={"X-Thread-ID": current_thread},
         )
     except Exception as e:
         print(e)

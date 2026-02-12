@@ -28,8 +28,8 @@ print(f"Chroma DB initialized with {db._collection.count()} documents.")
 
 
 def extract_act_name(file_path: str) -> str:
-    name = Path(file_path).stem  # Sale_of_Goods_Act_1930
-    name = name.replace("_", " ")  # Sale of Goods Act 1930
+    name = Path(file_path).stem  
+    name = name.replace("_", " ")  
     return name
 
 

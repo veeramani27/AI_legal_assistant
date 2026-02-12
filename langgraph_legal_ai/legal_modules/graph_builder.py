@@ -69,7 +69,6 @@ def build_legal_graph() -> StateGraph:
     workflow.add_edge("retriever", "compliance_and_loophole_validator")
     workflow.add_edge("retriever", "precedent_matcher")
 
-    # Sequential dependency: Risk needs Compliance
     workflow.add_edge(
         "compliance_and_loophole_validator", "risk_and_remediation_assessor"
     )

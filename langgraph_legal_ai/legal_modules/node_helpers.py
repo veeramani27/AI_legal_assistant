@@ -39,7 +39,7 @@ def chunk_and_save_to_chromadb(document_text: str, document_path: str):
 
     # 1. Initialize Semantic Chunker
     text_splitter = SemanticChunker(
-        embeddings=embeddings,  # Assuming 'embeddings' is available in scope
+        embeddings=embeddings,  
         breakpoint_threshold_type="percentile",
         breakpoint_threshold_amount=85,
     )

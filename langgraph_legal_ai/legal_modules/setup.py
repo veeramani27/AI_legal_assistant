@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import ChatOpenAI
-# Langfuse (Optional, keeping as per original code)
+# Langfuse 
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 
